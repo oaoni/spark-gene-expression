@@ -19,7 +19,7 @@ if not os.path.exists(os.path.join(os.getcwd(),"data")):
 class gdc_data:
     '''
     Creates data objects that can query the gdc data portal for gene expression data,
-    write compressed data from portal to disk, and uncompress and store the gene expression
+    write compressed data from portal to disk, and uncompress and store gene expression
     data in a pandas dataframe (gene x sample_id)
     '''
 
