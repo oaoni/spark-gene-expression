@@ -203,7 +203,7 @@ class gdc_data:
 
     def data_add(self,data):
         """
-        Directly load data into object if avaliable as a dataframe
+        Directly load data into object if available as a dataframe
         """
         self.data = data
 
