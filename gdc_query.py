@@ -242,3 +242,16 @@ class gdc_data:
             self.data = pd.read_csv(self.file)
         else:
             print("file does not exist")
+			
+#Debugging and testing		
+if __name__ == "__main__":
+
+	#Initialize a data object
+	test = gdc_data("LIHC10")
+	
+	#Read data from a csv file in query directory
+	test.read_csv()
+	
+	#Head of loaded data
+	print(test.data.head())
+	
