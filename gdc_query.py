@@ -13,8 +13,9 @@ import io
 from io import StringIO
 
 #Generates a folder to store the data portal gene expression data if none exits
-if not os.path.exists(os.path.join(os.getcwd(),"data")):
-    os.makedirs(os.getcwd(),"data")
+newpath = os.path.join(os.getcwd(),"data")
+if not os.path.exists(newpath):
+    os.makedirs(newpath)
 
 class gdc_data:
     '''
