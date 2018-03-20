@@ -240,7 +240,7 @@ class gdc_data:
         """
 
         if os.path.exists(self.file):
-            self.data = pd.read_csv(self.file)
+            self.data = pd.read_csv(self.file,index_col=0)
         else:
             print("file does not exist")
 			
