@@ -92,7 +92,7 @@ class gdc_data:
             "filters": json.dumps(filters),
             "fields": "file_id",
             "format": "JSON",
-            "size": size  #Set to the first 10 files for developing
+            "size": size  #Set to the first 10 files for development
             }
 
         response = requests.get(files_endpt, params = params)
