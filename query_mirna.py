@@ -120,10 +120,10 @@ class gdc_mirna:
 
                 #index = pd.read_table(StringIO(tar.extractfile(tar.getmembers()[1]).read().decode('utf-8')),
                # sep="\t",usecols=['miRNA_ID'])
-                KIRP.data.index = pd.read_table(StringIO(tar.extractfile(tar.getmembers()[1]).
+                self.data.index = pd.read_table(StringIO(tar.extractfile(tar.getmembers()[1]).
                                                          read().decode('utf-8')),sep="\t",
                                                 usecols=['miRNA_ID']).miRNA_ID.tolist()
-                KIRP.data.index.name = 'miRNA_ID'
+                self.data.index.name = 'miRNA_ID'
 
     def data_save(self, safe=True, format="csv"):
         """
@@ -141,11 +141,11 @@ class gdc_mirna:
         elif format == "csv":
             self.file = os.path.join(self.query_dir,self.name+".csv")
             self.data.to_csv(self.file)
-            print("csv file successfully saved")
+            print("csv file successfully saved...")
         elif format == "txt":
             self.file = os.path.join(self.query_dir,self.name+".txt")
             self.data.to_csv(self.file,sep='\t')
-            print("txt file successfully saved")
+            print("txt file successfully saved...")
         # elif format == "parquet":
         #     self.file = os.path.join(self.query_dir,self.name+".pq")
         #     self.data.to_parquet(self.file)
@@ -157,8 +157,8 @@ class gdc_mirna:
 
 if __name__ == '__main__':
 
-    KIRP = gdc_mirna('KIRP10')
-    print(KIRP.name)
-    KIRP.data_read()
-    KIRP.data_save(format="csv")
-    print(KIRP.data.head())
+
+    KIRC = gdc_mirna('KIRC')
+    KIRC.data_read()
+    print(KIRC.data.shape)
+    KIRC.data_save(format="csv")
