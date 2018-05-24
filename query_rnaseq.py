@@ -5,19 +5,17 @@ import gzip
 import pandas as pd
 import tarfile
 import os
-import sys
-import shutil
-import numpy as np
-import tarfile
-import io
 from io import StringIO
+from io import BytesIO
+import time
+
 
 #Generates a folder to store the data portal gene expression data if none exits
 newpath = os.path.join(os.getcwd(),"data")
 if not os.path.exists(newpath):
     os.makedirs(newpath)
 
-class gdc_data:
+class gdc_rnaseq:
     '''
     Creates data objects that can query the gdc data portal for gene expression data,
     write compressed data from portal to disk, and uncompress and store gene expression
@@ -32,7 +30,7 @@ class gdc_data:
         #Initialize empty manifest data matrix
         self.manifest = pd.DataFrame()
         #Initialize the location for the data directory
-        self.main_dir = os.path.join(os.getcwd(),"data")
+        self.main_dir = os.path.join(os.getcwd(),"data","RNASeq")
         self.query_dir = os.path.join(self.main_dir,self.name)
         #Initialize location of data csv file
         self.file = os.path.join(self.query_dir,self.name+".csv")
@@ -115,6 +113,67 @@ class gdc_data:
         self.file_name = file_name
         self.response = response
 
+    def data_read(self):
+        """
+        Extracts, decodes, and generates a pandas dataframe from the queried data
+        Input: self.response.content
+        Output: self.data stores a pandas dataframe (mirna x sample id)
+        """
+        #Run query if server response is empty
+        if not self.response:
+            self.data_query()
+
+        #Store the contents of the query in a memory location
+        with BytesIO(self.response.content) as targz:
+            #Generate a tarfile from the compressed bytes object
+            with tarfile.open(fileobj=targz) as tar:
+                #Iterate through the members of the targz file
+                for member in tar.getmembers()[1:]:
+                    #Extract member of the targz file, read the data, and store the gz file in bytes memory location,
+                    #and open gz file
+                    with gzip.open(BytesIO(tar.extractfile(member).read())) as gz:
+                        #Read gz file, decode to utf-8 and set in string memory location
+                        with StringIO(gz.read().decode("utf-8")) as data:
+                            #Read the txt data file and concatenate the the dataframe
+                            self.data = pd.concat([self.data,pd.read_table(data,sep="\t", header=None,usecols=[1])
+                            .rename(columns={1:member.name.split('/')[0]})],axis=1)
+
+                #Set index of rnaseq names on the dataframe
+                self.data.index = pd.read_table(StringIO(gzip.open(BytesIO((tar.extractfile(tar.getmembers()[1])
+                .read()))).read().decode("utf-8")),sep="\t",header=None,usecols=[0])[0].tolist()
+                #Set index name
+                self.data.index.name = 'RNASeq_ID'
+
+    def data_save(self, safe=True, format="csv"):
+        """
+        Saves loaded data as a csv, txt or in parquet format
+        Inputs: safe = True/False, format = ['csv','txt']
+        Output: Saved file in respective folder in the query_dir
+        """
+        #Create a path to save the data if it doesnt exist already
+        if not os.path.exists(self.query_dir):
+            os.makedirs(self.query_dir)
+
+        if self.data.empty:
+            print('Data has not been queried or read, run method self.data_read')
+            return
+        elif format == "csv":
+            self.file = os.path.join(self.query_dir,self.name+".csv")
+            self.data.to_csv(self.file)
+            print("csv file successfully saved...")
+        elif format == "txt":
+            self.file = os.path.join(self.query_dir,self.name+".txt")
+            self.data.to_csv(self.file,sep='\t')
+            print("txt file successfully saved...")
+        # elif format == "parquet":
+        #     self.file = os.path.join(self.query_dir,self.name+".pq")
+        #     self.data.to_parquet(self.file)
+        #     print("parquet file successfully saved")
+        # elif format == "sql":
+        #     self.file = os.path.join(self.query_dir,self.name)
+        #     self.data.to_sql(self.file)
+        #     print("sql file successfully saved")
+
     def data_write(self):
         """
         Writes query file to query directory
@@ -179,9 +238,9 @@ class gdc_data:
                         df.columns = [files[0]]
                         df.to_csv(os.path.join(uncomp_gz_dir,file[:-3]),header=False,sep=",",index=True)
 
-        self.data_save()
+        self.data_store()
 
-    def data_save(self):
+    def data_store(self):
         """
         Saves dataframe to object from uncompressed tar and targz files
         """
@@ -243,16 +302,19 @@ class gdc_data:
             self.data = pd.read_csv(self.file,index_col=0)
         else:
             print("file does not exist")
-			
-#Debugging and testing		
+
+#Debugging and testing
 if __name__ == "__main__":
 
-	#Initialize a data object
-	test = gdc_data("LIHC10")
-	
-	#Read data from a csv file in query directory
-	test.read_csv()
-	
-	#Head of loaded data
-	print(test.data.head())
-	
+    t0 = time.time()
+    #Initialize a data object
+    KIRP = gdc_rnaseq("KIRC")
+    KIRP.data_read()
+    KIRP.data_save()
+    print(KIRP.data.shape)
+    t1 = time.time()
+
+    print(t1-t0)
+
+    #print(test.data.shape)
+    #test.data_read()

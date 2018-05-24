@@ -120,14 +120,13 @@ class gdc_mirna:
                 for member in tar.getmembers()[1:]: #Iterate through the members of the tarfile
                     #extract,decode and concatenate member to the dataframe
                     with StringIO(tar.extractfile(member).read().decode('utf-8')) as data:
-                        self.data = pd.concat([self.data,pd.read_table(data,sep="\t",usecols=['read_count']).
-                                        rename(columns={'read_count':member.name.split('/')[0]})],axis=1)
+                        self.data = pd.concat([self.data,pd.read_table(data,sep="\t",usecols=['read_count'])
+                        .rename(columns={'read_count':member.name.split('/')[0]})],axis=1)
 
-                #index = pd.read_table(StringIO(tar.extractfile(tar.getmembers()[1]).read().decode('utf-8')),
-               # sep="\t",usecols=['miRNA_ID'])
-                self.data.index = pd.read_table(StringIO(tar.extractfile(tar.getmembers()[1]).
-                                                         read().decode('utf-8')),sep="\t",
-                                                usecols=['miRNA_ID']).miRNA_ID.tolist()
+                #Set index of mirna names on the dataframe
+                self.data.index = pd.read_table(StringIO(tar.extractfile(tar.getmembers()[1])
+                .read().decode('utf-8')),sep="\t",usecols=['miRNA_ID']).miRNA_ID.tolist()
+                #Set index name
                 self.data.index.name = 'miRNA_ID'
 
     def data_save(self, safe=True, format="csv"):
@@ -162,8 +161,9 @@ class gdc_mirna:
 
 if __name__ == '__main__':
 
-
-    KIRC = gdc_mirna('KIRC')
+    t0 = time.time()
+    KIRC = gdc_mirna('KIRC5')
     KIRC.data_read()
     print(KIRC.data.shape)
-    KIRC.data_save(format="csv")
+    t1 = time.time()
+    #KIRC.data_save(format="csv")
