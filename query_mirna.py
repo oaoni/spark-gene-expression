@@ -8,6 +8,11 @@ from io import StringIO
 from io import BytesIO
 import tarfile
 
+#Generates a folder to store the data portal gene expression data if none exits
+newpath = os.path.join(os.getcwd(),"data")
+if not os.path.exists(newpath):
+    os.makedirs(newpath)
+
 class gdc_mirna:
     """
     Creates data objects that can query the gdc data portal for miRNA expression data and
