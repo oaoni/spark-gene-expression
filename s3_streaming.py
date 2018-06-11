@@ -23,3 +23,9 @@ def s3_to_numpy(client,bucket,key):
     np_array = np.loadtxt(bytes_stream, delimiter=',')
     
     return np_array
+	
+def s3_to_pandas(client ,key, bucket):
+    obj = client.get_object(Key=key, Bucket=bucket)
+    bytes_stream = BytesIO(obj['Body'].read())
+    data = pd.read_csv(bytes_stream, index_col=0)
+    return data
