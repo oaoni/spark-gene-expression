@@ -151,18 +151,18 @@ class gdc_rnaseq:
         Output: Saved file in respective folder in the query_dir
         """
         #Create a path to save the data if it doesnt exist already
-        if not os.path.exists(self.query_dir):
-            os.makedirs(self.query_dir)
+        if not os.path.exists(self.main_dir):
+            os.makedirs(self.main_dir)
 
         if self.data.empty:
             print('Data has not been queried or read, run method self.data_read')
             return
         elif format == "csv":
-            self.file = os.path.join(self.query_dir,self.name+".csv")
+            self.file = os.path.join(self.main_dir,self.name+"_RNASeq.csv")
             self.data.to_csv(self.file)
             print("csv file successfully saved...")
         elif format == "txt":
-            self.file = os.path.join(self.query_dir,self.name+".txt")
+            self.file = os.path.join(self.main_dir,self.name+"_RNASeq.txt")
             self.data.to_csv(self.file,sep='\t')
             print("txt file successfully saved...")
         # elif format == "parquet":
