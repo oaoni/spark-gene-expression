@@ -22,10 +22,14 @@ class gdc_cnv:
         #Folder to store saved data
         self.main_dir = os.path.join(os.getcwd(),"data","CNV")
         self.query_dir = os.path.join(self.main_dir,self.name)
+        #Initialize connection to in RAM sql database
+        self.conn = sqlite3.connect(':memory:')
+        #Initialize sqlite database cursor SQL executions
+        self.sql = self.conn.cursor()
+        #Initialize variable to store query manifest
+        self.manifest = ''
         #Initialize location of data csv file
         self.file = ''
-        #Initialize index
-        self.index = ''
 
     def data_query(self):
         """
@@ -93,27 +97,35 @@ class gdc_cnv:
 
     def data_read(self):
         """
-        Extracts, decodes, and generates a
+        Extracts, decodes, and generates a mysql database for queried cnv data https reponse
         Input: self.response.content
-        Output:
+        Output: Stored .sqlite file in the main directory with a table for every sample id
         """
         #Run query if server response is empty
         if not self.response:
             self.data_query()
 
+        #Form a memory location for a sqlite file
+        #loc = BytesIO()
+
         #Connect to the sqlite database
-        connection = sqlite3.connect(os.path.join(self.main_dir,self.name+'_cnv.sqlite'))
+        #connection = sqlite3.connect(os.path.join(self.main_dir,self.name+'_cnv.sqlite'))
+        #connection = sqlite3.connect(loc)
+
 
         #Access body of bytes response and open compressed targz file as a tarfile
         with tarfile.open(fileobj=BytesIO(self.response.content)) as targz:
-            #Iterate through the members of the tarfile
+            #Store the manifest for the query
+            manifest = targz.getmembers()[0]
+            self.manifest = pd.read_table(BytesIO(targz.extractfile(manifest).read()),sep='\t')
+            #Iterate through the rest of the members of the tarfile
             for member in targz.getmembers()[1:]:
                 #Extract each member
                 with BytesIO(targz.extractfile(member).read()) as data:
                     #Read member into a pandas dataframe and store in a sql database
                     pd.read_table(data, sep='\t').to_sql(
                         name = member.name.split('/')[0],
-                        con = connection,
+                        con = self.conn,
                         schema = 'GDC_Aliquot TEXT, Chromosome TEXT, Start INTEGER, End INTEGER, Num_Probes INTEGER, Segment_Mean REAL',
                         index=False,
                         if_exists='append'
@@ -129,3 +141,12 @@ if __name__ == '__main__':
 
     #Read the contents of the query
     cnvKIRP.data_read()
+
+    #Select table name from the manifest
+    table = cnvKIRP.manifest.id[0]
+
+    #Print the table from memory
+    for row in cnvKIRP.sql.execute('SELECT * FROM ' + "'" + table + "'"):
+        print(row)
+
+    #Save the database to disk
