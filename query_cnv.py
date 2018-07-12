@@ -9,14 +9,26 @@ from io import BytesIO
 import tarfile
 import sqlite3
 
+allowed_cns = ['cnv.seg','nocnv.seg']
+
 class gdc_cnv:
     """
     Creates data objects that can query the gdc data portal for copy number variation data
+    Can specify cns (Copy Number Segmentation) for cnv.seg files or nocnv.seg files
+    cnv.seg files includes both germline and somatic CNVs, whereas nocnv.seg files include only somatic CNVs.
     """
 
-    def __init__(self, name):
+    def assertions(self):
+        global allowed_cns
+        assert self.cns in allowed_cns, 'Invalid Copy Number Segmentation (cns), must be "cnv.seq" for Non-Masked \
+        Copy Number Variation (CNV), or "nocnv.seg" for Masked CNV'
+
+    def __init__(self, name, cns = 'cnv.seg'):
         #Initialize the type of cancer for the database query and the size of query
         self.name = name
+        #Type of Copy Number Segmentation, default is Non-Masked, for Masked input cns = 'nocnv.seg'
+        self.cns = cns
+        self.assertions()
         #Initialize an empty http reponse
         self.response = ''
         #Folder to store saved data
@@ -51,7 +63,10 @@ class gdc_cnv:
             size = 2000
 
         #Specify the type of copy number segmentation for the query
-        CNS = "Copy Number Segment" #Or ["Masked Copy Number Segment"]
+        if self.cns == 'cnv.seg':
+            CNS = "Copy Number Segment" #Or ["Masked Copy Number Segment"]
+        else:
+            CNS = "Masked Copy Number Segment"
 
         filters = {
             "op": "and",
