@@ -7,6 +7,7 @@ import json
 from io import StringIO
 from io import BytesIO
 import tarfile
+import sqlite3
 
 class gdc_cnv:
     """
@@ -90,7 +91,33 @@ class gdc_cnv:
         #Acquire memory location of compressed data from the data portal
         self.response = requests.post(data_endpt, data = json.dumps(params), headers = {"Content-Type":"application/json"})
 
-        
+    def data_read(self):
+        """
+        Extracts, decodes, and generates a
+        Input: self.response.content
+        Output:
+        """
+        #Run query if server response is empty
+        if not self.response:
+            self.data_query()
+
+        #Connect to the sqlite database
+        connection = sqlite3.connect(os.path.join(self.main_dir,self.name+'_cnv.sqlite'))
+
+        #Access body of bytes response and open compressed targz file as a tarfile
+        with tarfile.open(fileobj=BytesIO(self.response.content)) as targz:
+            #Iterate through the members of the tarfile
+            for member in targz.getmembers()[1:]:
+                #Extract each member
+                with BytesIO(targz.extractfile(member).read()) as data:
+                    #Read member into a pandas dataframe and store in a sql database
+                    pd.read_table(data, sep='\t').to_sql(
+                        name = member.name.split('/')[0],
+                        con = connection,
+                        schema = 'GDC_Aliquot TEXT, Chromosome TEXT, Start INTEGER, End INTEGER, Num_Probes INTEGER, Segment_Mean REAL',
+                        index=False,
+                        if_exists='append'
+                    )
 
 if __name__ == '__main__':
 
@@ -100,4 +127,5 @@ if __name__ == '__main__':
     #Run query method to make https request to the data portal
     cnvKIRP.data_query()
 
-    print('Hello World')
+    #Read the contents of the query
+    cnvKIRP.data_read()
