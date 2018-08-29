@@ -129,14 +129,7 @@ class gdc_snv:
 
 if __name__ == "__main__":
 
-    #kirc = gdc_snv("KIRC")
-    #kirc.data_read()
-    #print(kirc.data.shape)
-    #kirc.data_save()
-
-    names = ['KIRP','LIHC','LUAD','LUSC','CHOL','PRAD','THCA','HNSC']
-
-    for name in names:
-        type = gdc_snv(name)
-        type.data_read()
-        type.data_save()
+    kirc = gdc_snv("KIRC")
+    kirc.data_read()
+    print(kirc.data.shape)
+    kirc.data_save()
